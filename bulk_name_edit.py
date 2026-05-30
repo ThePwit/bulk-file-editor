@@ -810,13 +810,19 @@ class BulkEditApp(ttk.Frame):
             return
         try:
             data = json.loads(p.read_text(encoding="utf-8"))
+            skip_keys = {"detected_label_var", "list_count_var", "template_example_var"}
             for k, v in data.items():
+                if k in skip_keys:
+                    continue
                 if hasattr(self, k):
                     var = getattr(self, k)
                     if isinstance(var, tk.Variable):
                         var.set(v)
-            self.refresh_file_list()
+            self.dry_run_var.set(True)
+            self.list_count_var.set("Click Refresh to scan files")
             self._apply_dark(bool(data.get("dark_var", False)))
+            self._update_detected_season_label(allow_scan=False)
+            self._update_template_example(allow_scan=False)
         except Exception:
             pass
 
@@ -940,7 +946,7 @@ class BulkEditApp(ttk.Frame):
             self.season_per_file_var.get(),
         )
 
-    def _update_detected_season_label(self):
+    def _update_detected_season_label(self, allow_scan: bool = True):
         base_txt = self.folder_var.get().strip()
         if not base_txt:
             self.detected_label_var.set("Choose a base folder.")
@@ -951,7 +957,7 @@ class BulkEditApp(ttk.Frame):
             self.detected_label_var.set("Auto-detect off. Using manual Season.")
             try: self.season_entry.state(["!disabled"])
             except Exception: pass
-            self._update_template_example()
+            self._update_template_example(allow_scan=allow_scan)
             return
 
         # show a helpful status line:
@@ -968,11 +974,11 @@ class BulkEditApp(ttk.Frame):
         try: self.season_entry.state(["!disabled"])
         except Exception: pass
 
-        self._update_template_example()
+        self._update_template_example(allow_scan=allow_scan)
 
     # ---------- Template Example ----------
 
-    def _update_template_example(self):
+    def _update_template_example(self, allow_scan: bool = True):
         try:
             tmpl = (self.inc_template_var.get().strip() or "")
             if not tmpl:
@@ -993,7 +999,7 @@ class BulkEditApp(ttk.Frame):
                         sample_path = base / rel
                     except Exception:
                         sample_path = None
-                if sample_path is None or not sample_path.exists():
+                if allow_scan and (sample_path is None or not sample_path.exists()):
                     _, files = self._collect_for_list()
                     sample_path = files[0] if files else None
 
