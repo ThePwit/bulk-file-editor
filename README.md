@@ -26,6 +26,16 @@ No third-party packages are required to run the app.
 
 ## Run
 
+On Windows, double-click:
+
+```text
+Launch Bulk File Editor.bat
+```
+
+The launcher uses your normal `python` command when Tkinter is working. If that Python install cannot start Tkinter, it falls back to the working Inkscape-bundled Python if it is available.
+
+You can also run the script directly:
+
 ```powershell
 python .\bulk_name_edit.py
 ```

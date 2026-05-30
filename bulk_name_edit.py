@@ -11,7 +11,7 @@ Bulk File Editor/Renamer
 """
 
 from __future__ import annotations
-import os, re, json, shutil, threading, queue, subprocess, platform, webbrowser, uuid
+import os, re, json, shutil, threading, queue, subprocess, platform, webbrowser, uuid, sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -1642,8 +1642,22 @@ class BulkEditApp(ttk.Frame):
 # ----------------------- Main -----------------------
 
 def main():
-    root = tk.Tk()
+    try:
+        root = tk.Tk()
+    except tk.TclError as e:
+        raise SystemExit(
+            "Unable to start the Tkinter window.\n\n"
+            "Your current Python install cannot find a usable Tcl/Tk runtime. "
+            "Try Launch Bulk File Editor.bat, or repair/reinstall Python with the Tcl/Tk option enabled.\n\n"
+            f"Original Tk error:\n{e}"
+        ) from e
+
     app = BulkEditApp(root)
+    if "--startup-check" in sys.argv:
+        root.withdraw()
+        root.update_idletasks()
+        root.destroy()
+        return
     root.protocol("WM_DELETE_WINDOW", lambda: (app._save_settings(), root.destroy()))
     root.mainloop()
 
