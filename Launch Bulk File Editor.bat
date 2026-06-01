@@ -12,7 +12,7 @@ echo Bulk File Editor launch log>"%LOG_FILE%"
 echo Started: %DATE% %TIME%>>"%LOG_FILE%"
 echo App dir: %APP_DIR%>>"%LOG_FILE%"
 
-python -c "import tkinter as tk; root = tk.Tk(); root.withdraw(); root.destroy()" >>"%LOG_FILE%" 2>>&1
+python -c "import tkinter as tk; root = tk.Tk(); root.withdraw(); root.destroy()" >>"%LOG_FILE%" 2>&1
 if errorlevel 1 (
     echo Default python cannot start Tkinter; trying fallback.>>"%LOG_FILE%"
     if exist "C:\Program Files\Inkscape\bin\python.exe" (
@@ -22,7 +22,8 @@ if errorlevel 1 (
     )
 )
 
-"%PYTHON_EXE%" "%APP_SCRIPT%" %* >>"%LOG_FILE%" 2>>&1
+echo Using Python: %PYTHON_EXE%>>"%LOG_FILE%"
+"%PYTHON_EXE%" "%APP_SCRIPT%" %* >>"%LOG_FILE%" 2>&1
 set "APP_EXIT=%ERRORLEVEL%"
 
 if "%APP_EXIT%"=="0" (

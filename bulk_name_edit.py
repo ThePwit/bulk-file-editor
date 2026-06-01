@@ -427,6 +427,7 @@ class BulkEditApp(ttk.Frame):
         self.stop_flag = threading.Event()
         self.last_renames: List[Tuple[Path, Path]] = []  # (new_path -> old_path)
         self._filter_refresh_job: Optional[str] = None
+        self._loading_settings = False
 
         self._build_ui()
         self._bind_shortcuts()
@@ -809,6 +810,7 @@ class BulkEditApp(ttk.Frame):
         if not p.exists():
             return
         try:
+            self._loading_settings = True
             data = json.loads(p.read_text(encoding="utf-8"))
             skip_keys = {"detected_label_var", "list_count_var", "template_example_var"}
             for k, v in data.items():
@@ -825,6 +827,14 @@ class BulkEditApp(ttk.Frame):
             self._update_template_example(allow_scan=False)
         except Exception:
             pass
+        finally:
+            self._loading_settings = False
+            if self._filter_refresh_job:
+                try:
+                    self.after_cancel(self._filter_refresh_job)
+                except Exception:
+                    pass
+                self._filter_refresh_job = None
 
     def _save_settings(self):
         keys = [k for k in self.__dict__ if isinstance(getattr(self, k), tk.Variable)]
@@ -980,6 +990,8 @@ class BulkEditApp(ttk.Frame):
 
     def _update_template_example(self, allow_scan: bool = True):
         try:
+            if self._loading_settings:
+                allow_scan = False
             tmpl = (self.inc_template_var.get().strip() or "")
             if not tmpl:
                 self.template_example_var.set("Example: (set a Template to see a preview)")
@@ -1034,6 +1046,8 @@ class BulkEditApp(ttk.Frame):
     # ---------- Filters / listing ----------
 
     def _filters_changed(self):
+        if self._loading_settings:
+            return
         if self._filter_refresh_job:
             try:
                 self.after_cancel(self._filter_refresh_job)
